@@ -8,6 +8,9 @@ from keras.layers import Dense
 from keras.optimizers import Adam
 from keras.utils.np_utils import to_categorical
 import random
+import cv2
+import requests
+from PIL import Image
 
 #saves mnist data x_train+ x_test is coordinates y_train and y_test are labels
 np.random.seed(0)
@@ -58,11 +61,12 @@ X_test = X_test.reshape(X_test.shape[0], num_pixels)
 
 #creates model with keras
 def create_model():
-    model= Sequential()
-    model.add(Dense(10, input_dim=num_pixels, activation="relu"))
-    model.add(Dense(10, activation="relu"))
-    model.add(Dense(num_classes, activation="softmax"))
-    model.compile(Adam(0.01), loss="categorical_crossentropy", metrics=["accuracy"])
+    model = Sequential()
+    model.add(Dense(10, input_dim=num_pixels, activation='relu'))
+    model.add(Dense(30, activation='relu'))
+    model.add(Dense(10, activation='relu'))
+    model.add(Dense(num_classes, activation='softmax'))
+    model.compile(Adam(lr=0.01), loss='categorical_crossentropy', metrics=['accuracy'])
     return model
 model = create_model()
 print(model.summary())
@@ -90,25 +94,19 @@ print(type(score))
 print("test score:", score[0])
 print("test accuracy", score[1])
 
-import requests
-from PIL import Image
-
+#imports image and makes it usable for the model
 url = 'https://www.researchgate.net/profile/Jose_Sempere/publication/221258631/figure/fig1/AS:305526891139075@1449854695342/Handwritten-digit-2.png'
 response = requests.get(url, stream=True)
 img = Image.open(response.raw)
-plt.imshow(img)
+img = np.asarray(img)
+img = cv2.resize(img, (28, 28))
+img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+img = cv2.bitwise_not(img)
+plt.imshow(img, cmap=plt.get_cmap('gray'))
 plt.show()
+img = img/255
+img = img.reshape(1, 784)
 
-import cv2
-
-img_array = np.asarray(img)
-resized = cv2.resize(img_array, (28, 28))
-gray_scale = cv2.cvtColor(resized, cv2.COLOR_RGB2GRAY)
-image = cv2.bitwise_not(gray_scale)
-plt.imshow(image, cmap=plt.get_cmap("gray"))
-plt.show()
-
-image = image/255
-image = image.reshape(1, 784)
-prediction = model.predict_classes(image)
+#the image is classified and printed
+prediction = model.predict_classes(img)
 print("predicted digit:", str(prediction))
