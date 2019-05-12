@@ -89,3 +89,26 @@ score= model.evaluate(X_test, y_test, verbose=0)
 print(type(score))
 print("test score:", score[0])
 print("test accuracy", score[1])
+
+import requests
+from PIL import Image
+
+url = 'https://www.researchgate.net/profile/Jose_Sempere/publication/221258631/figure/fig1/AS:305526891139075@1449854695342/Handwritten-digit-2.png'
+response = requests.get(url, stream=True)
+img = Image.open(response.raw)
+plt.imshow(img)
+plt.show()
+
+import cv2
+
+img_array = np.asarray(img)
+resized = cv2.resize(img_array, (28, 28))
+gray_scale = cv2.cvtColor(resized, cv2.COLOR_RGB2GRAY)
+image = cv2.bitwise_not(gray_scale)
+plt.imshow(image, cmap=plt.get_cmap("gray"))
+plt.show()
+
+image = image/255
+image = image.reshape(1, 784)
+prediction = model.predict_classes(image)
+print("predicted digit:", str(prediction))
