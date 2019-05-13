@@ -9,6 +9,8 @@ from keras.utils.np_utils import to_categorical
 from keras.layers import Flatten
 from keras.layers.convolutional import Conv2D
 from keras.layers.convolutional import MaxPooling2D
+from keras.layers import Dropout
+from keras.models import Model
 import random
 import cv2
 import requests
@@ -58,16 +60,17 @@ X_test = X_test/255
 
 #definition of leNet_model function
 def leNet_model():
-  model = Sequential()
-  model.add(Conv2D(30, (5,5), input_shape=(28, 28, 1), activation="relu"))
-  model.add(MaxPooling2D(pool_size=(2, 2)))
-  model.add(Conv2D(15, (3, 3), activation="relu"))
-  model.add(MaxPooling2D(pool_size=(2, 2)))
-  model.add(Flatten())
-  model.add(Dense(500, activation="relu"))
-  model.add(Dense(num_classes, activation="softmax"))
-  model.compile(Adam(lr=0.01), loss="categorical_crossentropy", metrics=["accuracy"])
-  return model
+    model = Sequential()
+    model.add(Conv2D(30, (5,5), input_shape=(28, 28, 1), activation="relu"))
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+    model.add(Conv2D(15, (3, 3), activation="relu"))
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+    model.add(Flatten())
+    model.add(Dense(500, activation="relu"))
+    model.add(Dropout(0.5))
+    model.add(Dense(num_classes, activation="softmax"))
+    model.compile(Adam(lr=0.01), loss="categorical_crossentropy", metrics=["accuracy"])
+    return model
 
 model = leNet_model()
 print(model.summary())
@@ -119,3 +122,24 @@ score= model.evaluate(X_test, y_test, verbose=0)
 print(type(score))
 print("test score:", score[0])
 print("test accuracy", score[1])
+
+layer1 = Model(inputs=model.layers[0].input, outputs=model.layers[0].output)
+layer2 = Model(inputs=model.layers[0].input, outputs=model.layers[2].output)
+
+visual_layer1, visual_layer2 = layer1.predict(img), layer2.predict(img)
+
+#layer 1
+plt.figure(figsize=(10, 6))
+for i in range(30):
+    plt.subplot(6, 5, i+1)
+    plt.imshow(visual_layer1[0, :, :, i], cmap=plt.get_cmap('jet'))
+    plt.axis('off')
+plt.show()
+
+#layer 2
+plt.figure(figsize=(10, 6))
+for i in range(15):
+    plt.subplot(3, 5, i+1)
+    plt.imshow(visual_layer2[0, :, :, i], cmap=plt.get_cmap('jet'))
+    plt.axis('off')
+plt.show()
